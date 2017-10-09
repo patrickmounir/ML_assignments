@@ -10,6 +10,12 @@ creditcardTransactions = pd.read_csv('m_creditcard.csv')
 features = creditcardTransactions[['V2', 'V11']]
 isFraud = creditcardTransactions['Class']
 
+x = np.array([1,2,3,4])
+y = np.array([[5,6,7,8],[1,1,1,1]])
+# print(features)
+
+
+
 ######################### preceptron implementation ###########################
 
 def preceptron(X, Y, learningRate, iterations):
@@ -22,26 +28,40 @@ def preceptron(X, Y, learningRate, iterations):
     weightHistory = weightVector
     errorHistory = []
     numberOfIterations = 0
-    output  = []
+    while True:
+        h = inputMatrix.dot(weightVector)
+        h[np.where(h >= 0.5)] = 1
+        h[np.where(h < 0.5)] = 0
+        activationOutput = h
+        error = inputMatrix.T*((activationOutput-targetOuput)).T
+        weightDelta = (1.0/inputMatrix.shape[0])*error.sum(axis=1)
+        weightVector = weightVector - learningRate*weightDelta
+        weightHistory = np.c_[weightHistory, weightVector]
+        numberOfIterations +=1
+        if sum(abs(np.subtract(weightHistory[0:,weightHistory.shape[1]-2], weightVector))) < 0.0001:
+            break
 
-    for iter in np.arange(0,iterations):
-        error = 0
-        for i in np.arange(0,inputMatrix.shape[0]):
-            instance = inputMatrix[i]
-            h = instance.dot(weightVector)
-            output = 0 if(h < 0.5) else 1
-            error += 1 if(output != targetOuput[i]) else 0
+    # for iter in np.arange(0,iterations):
+    #     error = 0
+    #     for i in np.arange(0,inputMatrix.shape[0]):
+    #         instance = inputMatrix[i]
+    #         h = instance.dot(weightVector)
+    #         output = 0 if(h < 0.5) else 1
+    #         error += 1 if(output != targetOuput[i]) else 0
 
-            weightVector -= learningRate*(output-targetOuput[i])*instance
+    #         weightVector -= learningRate*(output-targetOuput[i])*instance
 
-            weightHistory = np.c_[weightHistory, weightVector]
-            errorHistory = np.r_[errorHistory, error]
+    #         weightHistory = np.c_[weightHistory, weightVector]
+    #         errorHistory = np.r_[errorHistory, error]
 
-    return weightVector,inputMatrix,weightHistory,errorHistory
+    # return weightVector,inputMatrix,weightHistory,errorHistory
+    return weightVector,inputMatrix,weightHistory,numberOfIterations
 
 
 ######################### Training ###########################
-weightVector, X,weightHistory,errorHistory = preceptron(features,isFraud,0.8,50)
+weightVector, X,weightHistory,numberOfIterations = preceptron(features,isFraud,0.2,50)
+# print(preceptron(features,isFraud,0.8,200))
+
 
 ######################### Calculating the output ###########################
 output = X.dot(weightVector)
@@ -61,8 +81,8 @@ ax.set_zlabel('Fraud')
 
 fig1, ax1 = plt.subplots()
 
-
-ax1.scatter(np.arange(0,weightHistory.shape[1]),weightHistory[1,0:], color='b')
-ax1.scatter(np.arange(0,weightHistory.shape[1]),weightHistory[2,0:], color='r')
+print(weightHistory.shape[1],numberOfIterations)
+ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[1,0:], color='b')
+ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[2,0:], color='r')
 
 plt.show()
