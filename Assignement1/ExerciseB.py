@@ -8,7 +8,7 @@ flights = pd.read_csv('HA.csv')
 flights = flights[['DISTANCE', 'ELAPSED_TIME']].dropna()
 Distance = flights['DISTANCE']
 ElapsedTime = flights['ELAPSED_TIME']
-
+# Distance[Distance != 0]= float(nan)
 ######################### Divide Training and Testing Implementation ###########################
 
 def trainingTest(X, Y, trainingPercentage):
@@ -41,33 +41,38 @@ def preceptron(X, Y, learningRate, iterations):
     weightVector = np.random.rand(inputMatrix.shape[1])
     weightHistory = weightVector
     errorHistory = []
+    output = []
     numberOfIterations = 0
-    while True:
-        h = inputMatrix.dot(weightVector)
-        activationOutput = h
-        error = inputMatrix.T*((activationOutput-targetOuput)).T
-        weightDelta = (1.0/inputMatrix.shape[0])*error.sum(axis=1)
-        weightVector = weightVector - learningRate*weightDelta
-        weightHistory = np.c_[weightHistory, weightVector]
-        numberOfIterations +=1
-        # print(weightVector)
+    # for i in np.arange(0, iterations):
+    #     h = inputMatrix.dot(weightVector)
+    #     activationOutput = h
+    #     print(weightVector)
+    #     print(learningRate*np.dot(np.transpose(inputMatrix),activationOutput-targetOuput))
+    #     weightVector -= learningRate*np.dot(np.transpose(inputMatrix),activationOutput-targetOuput)
+    #     print(weightVector)
+    #     # error = inputMatrix.T*((activationOutput-targetOuput)).T
+    #     # weightDelta = error.sum(axis=1)
+    #     # weightVector = weightVector - learningRate*weightDelta
+    #     weightHistory = np.c_[weightHistory, weightVector]
+    #     numberOfIterations +=1
+
         # if numberOfIterations == 5:
         #     break
-        if sum(abs(np.subtract(weightHistory[0:,weightHistory.shape[1]-2], weightVector))) < 0.1:
-            break
+        # if sum(abs(np.subtract(weightHistory[0:,weightHistory.shape[1]-2], weightVector))) < 0.1:
+        #     break
 
-    # for iter in np.arange(0,iterations):
-    #     error = 0
-    #     for i in np.arange(0,inputMatrix.shape[0]):
-    #         instance = inputMatrix[i]
-    #         h = instance.dot(weightVector)
-    #         output = 0 if(h < 0.5) else 1
-    #         error += 1 if(output != targetOuput[i]) else 0
+    for iter in np.arange(0,iterations):
+        error = 0
+        for i in np.arange(0,inputMatrix.shape[0]):
+            instance = inputMatrix[i]
+            h = instance.dot(weightVector)
+            output = 0 if(h < 0.5) else 1
+            # error += 1 if(output != targetOuput[i]) else 0
 
-    #         weightVector -= learningRate*(output-targetOuput[i])*instance
+            weightVector -= learningRate*(output-targetOuput[i])*instance
 
-    #         weightHistory = np.c_[weightHistory, weightVector]
-    #         errorHistory = np.r_[errorHistory, error]
+            weightHistory = np.c_[weightHistory, weightVector]
+            # errorHistory = np.r_[errorHistory, error]
 
     # return weightVector,inputMatrix,weightHistory,errorHistory
     return weightVector,inputMatrix,weightHistory,numberOfIterations
@@ -76,22 +81,22 @@ def preceptron(X, Y, learningRate, iterations):
 ######################### Training ###########################
 
 xTrain,xTest,yTrain,yTest = trainingTest(Distance, ElapsedTime,0.8)
-weightVector, X,weightHistory,numberOfIterations = preceptron(xTrain,yTrain,0.8,50)
+weightVector, X,weightHistory,numberOfIterations = preceptron(xTrain,yTrain,0.001,20)
 ######################### Testing ###########################
 
-
 ######################### Plotting ###########################
+output = X.dot(weightVector)
 
 fig, ax = plt.subplots()
 # fig1, ax1 = plt.subplots()
-
+print(output)
 ax.scatter(Distance, ElapsedTime, marker='x')
-
+ax.plot(xTrain,output,'r')
 
 fig1, ax1 = plt.subplots()
 
-print(weightHistory.shape[1],numberOfIterations)
-ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[1,0:], color='b')
-ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[2,0:], color='r')
+# print(weightHistory[1,0:].shape,np.arange(1,weightHistory.shape[1]+1))
+# ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[1,0:], color='b')
+# ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[2,0:], color='r')
 
 plt.show()
