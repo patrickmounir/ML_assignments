@@ -2,37 +2,54 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-######################### Reading the file m_cerditcard.csv ###########################
+######################### Reading the file HA.csv ###########################
 
 flights = pd.read_csv('HA.csv')
 flights = flights[['DISTANCE', 'ELAPSED_TIME']].dropna()
 Distance = flights['DISTANCE']
 ElapsedTime = flights['ELAPSED_TIME']
+mx = 0
+my = 0
+
 # Distance[Distance != 0]= float(nan)
 ######################### Divide Training and Testing Implementation ###########################
 
 def trainingTest(X, Y, trainingPercentage):
     X = np.array(X)
+    # normalize X
+    global mx, my
+    mx = np.max(X)
+    X = X / mx
+    # # normalize Y
     Y = np.array(Y)
-    trainingLength = int(X.shape[0]*trainingPercentage)
+    # my = np.max(Y)
+    # Y = Y / my
+
+    trainingLength = int(X.shape[0] * trainingPercentage)
     xTrain = np.zeros(trainingLength)
     yTrain = np.zeros(trainingLength)
-    xTest = np.zeros(X.shape[0]-trainingLength)
-    yTest = np.zeros(X.shape[0]-trainingLength)
-    for i in np.arange(0,trainingLength):
+    xTest = np.zeros(X.shape[0] - trainingLength)
+    yTest = np.zeros(X.shape[0] - trainingLength)
+    for i in np.arange(0, trainingLength):
         xTrain[i] = X[i]
         yTrain[i] = Y[i]
     for i in np.arange(trainingLength, X.shape[0]):
-        xTest[i-trainingLength] = X[i]
-        yTest[i-trainingLength] = Y[i]
-        
+        xTest[i - trainingLength] = X[i]
+        yTest[i - trainingLength] = Y[i]
 
-    return xTrain,xTest,yTrain,yTest
+    return xTrain, xTest, yTrain, yTest
+######################### Data Normalization Implementation ###########################
+def normalize(X):
+    normX = (X-X.mean())/X.std()
+    return normX
 ######################### Mean Square Error Implementation ###########################
+
+def calcError(pred, label):
+    return np.sqrt(((pred - label) ** 2).mean())
 
 ######################### Preceptron Implementation ###########################
 
-def preceptron(X, Y, learningRate, iterations):
+def preceptron(X, Y, learningRate):
     inputMatrix = np.array(X)
     targetOuput = np.array(Y)
 
@@ -41,62 +58,45 @@ def preceptron(X, Y, learningRate, iterations):
     weightVector = np.random.rand(inputMatrix.shape[1])
     weightHistory = weightVector
     errorHistory = []
-    output = []
     numberOfIterations = 0
-    # for i in np.arange(0, iterations):
-    #     h = inputMatrix.dot(weightVector)
-    #     activationOutput = h
-    #     print(weightVector)
-    #     print(learningRate*np.dot(np.transpose(inputMatrix),activationOutput-targetOuput))
-    #     weightVector -= learningRate*np.dot(np.transpose(inputMatrix),activationOutput-targetOuput)
-    #     print(weightVector)
-    #     # error = inputMatrix.T*((activationOutput-targetOuput)).T
-    #     # weightDelta = error.sum(axis=1)
-    #     # weightVector = weightVector - learningRate*weightDelta
-    #     weightHistory = np.c_[weightHistory, weightVector]
-    #     numberOfIterations +=1
-
-        # if numberOfIterations == 5:
-        #     break
-        # if sum(abs(np.subtract(weightHistory[0:,weightHistory.shape[1]-2], weightVector))) < 0.1:
-        #     break
-
-    for iter in np.arange(0,iterations):
-        error = 0
-        for i in np.arange(0,inputMatrix.shape[0]):
-            instance = inputMatrix[i]
-            h = instance.dot(weightVector)
-            output = 0 if(h < 0.5) else 1
-            # error += 1 if(output != targetOuput[i]) else 0
-
-            weightVector -= learningRate*(output-targetOuput[i])*instance
-
-            weightHistory = np.c_[weightHistory, weightVector]
-            # errorHistory = np.r_[errorHistory, error]
-
-    # return weightVector,inputMatrix,weightHistory,errorHistory
-    return weightVector,inputMatrix,weightHistory,numberOfIterations
+    while True:
+        h = inputMatrix.dot(weightVector)
+        activationOutput = h
+        weightVector -= learningRate * np.dot(np.transpose(inputMatrix),activationOutput - targetOuput)
+        error = calcError(activationOutput, targetOuput)
+        weightHistory = np.c_[weightHistory, weightVector]
+        numberOfIterations += 1
+        print(abs(errorHistory[len(errorHistory)-1]-error))
+        
+        if len(errorHistory) > 1 and abs(errorHistory[len(errorHistory)-1]-error) < 0.0000001 :
+            break
+        errorHistory = np.r_[errorHistory, error]
+    return weightVector, weightHistory, numberOfIterations
 
 
 ######################### Training ###########################
-
-xTrain,xTest,yTrain,yTest = trainingTest(Distance, ElapsedTime,0.8)
-weightVector, X,weightHistory,numberOfIterations = preceptron(xTrain,yTrain,0.001,20)
+xTrain, xTest, yTrain, yTest = trainingTest(Distance, ElapsedTime, 0.8)
+weightVector, weightHistory, numberOfIterations = preceptron(xTrain, yTrain, 0.000001)
 ######################### Testing ###########################
-
-######################### Plotting ###########################
+X = np.c_[np.ones(xTrain.shape[0]), xTrain]
 output = X.dot(weightVector)
-
+output = output
+xTestBiased = np.c_[np.ones(xTest.shape[0]), xTest]
+outputTest = xTestBiased.dot(weightVector)
+print(calcError(outputTest, yTest))
+######################### Plotting ###########################
 fig, ax = plt.subplots()
-# fig1, ax1 = plt.subplots()
-print(output)
-ax.scatter(Distance, ElapsedTime, marker='x')
-ax.plot(xTrain,output,'r')
+
+ax.scatter(Distance, ElapsedTime, marker='x',)
+ax.plot(xTrain*mx, output, 'r')
+ax.set_xlabel('Distance')
+ax.set_ylabel('Elapsed Time')
+
 
 fig1, ax1 = plt.subplots()
+ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[1,0:], color='b')
+ax1.set_xlabel('No. of Iterations')
+ax1.set_ylabel('Weight')
 
-# print(weightHistory[1,0:].shape,np.arange(1,weightHistory.shape[1]+1))
-# ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[1,0:], color='b')
-# ax1.scatter(np.arange(1,numberOfIterations+2),weightHistory[2,0:], color='r')
 
 plt.show()
