@@ -13,7 +13,7 @@ target=data[['8','9']]
 XTrain, XTest, YTrain, YTest = train_test_split(features, target, test_size=0.2,random_state=0)
 
 #####################MLP######################################
-def MLP(X, Y, learningRate,layers, early_stop=True):
+def MLP(X, Y, learningRate,layers, early_stop=True, Lambda=1e-05,BS=128):
     inputMatrix = np.array(X)
     targetOuput = np.array(Y)
     Lambda = 1e-05
@@ -73,8 +73,11 @@ print("Validation loss for 3rd configuration of hidden layers:")
 print(reg3.best_validation_score_)
 print(reg3.loss_)
 
-
-
+Lambda = 1e-05
+reg2Regularized = MLPRegressor(solver='sgd', alpha=Lambda,
+        hidden_layer_sizes=(10,8),max_iter=10000,
+        learning_rate='constant',learning_rate_init=0.001, validation_fraction=0.1,early_stopping=True,shuffle=False)
+reg2Regularized.fit(XTrain,YTrain)
 
 fig, axes = plt.subplots(2, 2, figsize=(15, 10))
 axes.ravel()[0].plot(np.arange(0, reg1.n_iter_), reg1.loss_curve_, color="g", label="Training Loss")
@@ -113,5 +116,18 @@ axes2.ravel()[1].set_title("learning rate "+str(reg2Learning.learning_rate_init)
 axes2.ravel()[1].set_xlabel("Number of iterations")
 axes2.ravel()[1].set_ylabel("Training Error")
 
+fig3, axes3 = plt.subplots(1, 2, figsize=(15, 10))
+axes3.ravel()[0].plot(np.arange(0, reg2.n_iter_), reg2.loss_curve_,  color='g', label="Training Loss")
+axes3.ravel()[0].plot(np.arange(0, reg2.n_iter_), reg2.validation_scores_, color='r' ,label="Validation loss")
+axes3.ravel()[0].set_title("un-Regularized")
+axes3.ravel()[0].set_xlabel("Number of iterations")
+axes3.ravel()[0].set_ylabel("Error")
+
+
+axes3.ravel()[1].plot(np.arange(0, reg2Regularized.n_iter_), reg2Regularized.loss_curve_,color='g', label="Training loss")
+axes3.ravel()[1].plot(np.arange(0, reg2Regularized.n_iter_), reg2Regularized.validation_scores_, color='r' ,label="Validation Loss")
+axes3.ravel()[1].set_title("Regularized")
+axes3.ravel()[1].set_xlabel("Number of iterations")
+axes3.ravel()[1].set_ylabel("Error")
 
 plt.show()
